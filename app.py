@@ -1,9 +1,18 @@
 # _*_ coding: utf-8 _*_
 
-from flask import Flask
+from flask_bootstrap import Bootstrap
+from flask import Flask, request, redirect, render_template
 
 # config import
 from config import app_config, app_active
+
+#Admin
+from admin.Admin import start_views
+
+#Controller
+from controller.User import UserController
+from controller.Product import ProductController
+
 config = app_config[app_active]
 
 from flask_sqlalchemy import SQLAlchemy
@@ -17,20 +26,93 @@ def create_app(config_name):
 
     app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['FLASK_ADMIN_SWATCH'] = 'paper'
     db = SQLAlchemy(config.APP)
+
+    start_views(app, db)
+
+    Bootstrap(app)
+
     db.init_app(app)
 
     @app.route('/')
     def index():
-        return 'Meu primeiro run'
+        return 'Hello, página inicial'
     
     @app.route('/login/')
     def login():
-        return 'Aqui ficará a tela de login'
+        return render_template('login.html', message="Esta é uma mensagem que veio da rota")
     
+    @app.route('/login/', methods=['POST'])
+    def login_post():
+        user = UserController()
+
+        email = request.form['email']
+        password = request.form['password']
+
+        result = user.login(email, password)
+
+        if result:
+            return redirect('/admin')
+        else:
+            return render_template('login.html', data={'status': 401, 
+                'msg': 'Dados de usuário incorretos', 'type': None})
+
+
     @app.route('/recovery-password/')
     def recovery_password():
         return 'Aqui ficará a tela de recuperar senha'
 
+
+    @app.route('/recovery-password/', methods=['POST'])
+    def send_recovery_password():
+        user = UserController()
+
+        result = user.recovery(request.form['email'])
+
+        if result:
+            return render_template('recovery.html', data={'status': 200, 
+            'msg': 'E-mail de recuperação enviado com sucesso'})
+        else:
+            return render_template('recovery.html', data={'status': 401, 
+            'msg': 'Erro ao enviar e-mail de recuperação'})
+
+    @app.route('/product', methods=['POST'])
+    def save_products():
+        product = ProductController()
+
+        result = product.salve_product(request.form)
+
+        if result:
+            message = "Inserido"
+        else:
+            message = "Não inserido"
+        
+        return message
+
+    @app.route('/product', methods=['PUT'])
+    def update_products():
+        product = ProductController()
+
+        result = product.update_product(request.form)
+
+        if result:
+            message = "Editado"
+        else:
+            message = "Não Editado"
+
+        return message
+
+    @app.route('/product/<int:id>', methods=['DELETE'])
+    def delete_products(id):
+        product = ProductController()
+        result = product.delete_product(id)
+
+        if result:
+            message = "Deletado"
+        else:
+            message = "Não Deletado"
+        
+        return message
 
     return app
