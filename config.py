@@ -3,11 +3,13 @@ import random, string
 
 class Config(object):
     CSRF_ENABLED = True
-    SECRET = 'qualquer_palavra_chave'
+    SECRET = 'ysb_92=qe#dgjf8%0ng+a*#4rt#5%3*4kw5%i2bck*gn@w3@f&-&'
     TEMPLATE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
     APP = None
     SQLALCHEMY_DATABASE_URI = 'mysql+mysqldb://root@localhost:3306/livro_flask'
+    """API_KEY PARA ENVIAR E-MAIL"""
+    SENDGRID_API_KEY = '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'
 
 class DevelopmentConfig(Config):
     TESTING = True

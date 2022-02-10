@@ -7,11 +7,12 @@ from sqlalchemy.sql.base import Executable
 from config import app_config, app_active
 from model.Role import Role
 from passlib.hash import pbkdf2_sha256
+from flask_login import UserMixin
 
 config = app_config[app_active]
 db = SQLAlchemy(config.APP)
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(40), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -29,7 +30,16 @@ class User(db.Model):
 
 
     def get_user_by_email(self):
-        return ''
+        try:
+            res = db.session.query(User).filter(User.email==self.email).first()
+        except Exception as e:
+            res = None
+            print(e)
+        finally:
+            db.session.close()
+            return res
+
+
 
     def get_user_by_id(self):
         try:
@@ -43,7 +53,14 @@ class User(db.Model):
             
     
     def update(self, obj):
-        return ''
+        try:
+            res = db.session.query(User).filter(User.id == self.id).update(obj)
+            db.session.commit()
+            return True
+        except Exception as e:
+            print(e)
+            db.session.rollback()
+            return False
     
     def hash_password(self, password):
         try:
@@ -65,6 +82,17 @@ class User(db.Model):
             res = db.session.query(func.count(User.id)).first()
         except Exception as e:
             res = []
+            print(e)
+        finally:
+            db.session.close()
+            return res
+    
+
+    def get_user_by_recovery(self):
+        try:
+            res = db.session.query(User).filter(User.recovery_code==self.recovery_code).first()
+        except Exception as e:
+            res = None
             print(e)
         finally:
             db.session.close()
